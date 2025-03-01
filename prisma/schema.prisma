@@ -32,11 +32,29 @@ model Role {
   id             Int              @id @default(autoincrement())
   name           String           @unique
   users          User[]
+  rolePermissions RolePermission[]
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
 }
 
+model Permission {
+  id             Int              @id @default(autoincrement())
+  action         String
+  resource       String
+  rolePermissions RolePermission[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+}
 
+model RolePermission {
+  id           Int         @id @default(autoincrement())
+  role         Role        @relation(fields: [roleId], references: [id])
+  roleId       Int
+  permission   Permission  @relation(fields: [permissionId], references: [id])
+  permissionId Int
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+}
 model Token {
   id        Int      @id @default(autoincrement())
   token     String   @unique
