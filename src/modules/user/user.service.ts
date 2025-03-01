@@ -23,7 +23,7 @@ export class UserService {
     const existUser = await this.userRepository.findOne({
       where: { email },
     });
-    if (existUser) throw new ConflictException('Email already exists');
+    if (existUser) throw new ConflictException('Email already registered');
 
     // get client role
     const clientRole = await this.roleService.getRoleByRoleName(
@@ -43,12 +43,19 @@ export class UserService {
     return user;
   }
 
-  async getUserByEmail(email: string) {
+  async findUserByEmail(email: string) {
     return this.userRepository.findOne({ where: { email } });
   }
 
+  async findUserById(id: number) {
+    return this.userRepository.findOneOrThrow(
+      { where: { id } },
+      `User with id ${id} not found`,
+    );
+  }
+
   async validateUser(email: string, password: string) {
-    const user = await this.getUserByEmail(email);
+    const user = await this.findUserByEmail(email);
     if (!user) throw new UnauthorizedException('Invalid credentials');
 
     const isMatchPassword = await compare(password, user.password);

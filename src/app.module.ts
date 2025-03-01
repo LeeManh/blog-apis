@@ -7,19 +7,25 @@ import { RoleModule } from './modules/role/role.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
 import { CommonModule } from './common/common.module';
+import { MailModule } from './modules/mail/mail.module';
+import { TokenModule } from './modules/token/token.module';
 import jwtConfig from './configs/jwt.config';
+import mailConfig from './configs/mail.config';
+import commonConfig from './configs/common.config';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [jwtConfig],
+      load: [jwtConfig, mailConfig, commonConfig],
     }),
     PrismaModule,
     UserModule,
     RoleModule,
     AuthModule,
     CommonModule,
+    MailModule,
+    TokenModule,
   ],
   controllers: [AppController],
   providers: [AppService],

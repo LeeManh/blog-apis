@@ -12,3 +12,9 @@ export interface ISaveRefreshToken {
   token: string;
   userId: number;
 }
+
+export enum TokenType {
+  REFRESH = 'REFRESH',
+  EMAIL_VERIFICATION = 'EMAIL_VERIFICATION',
+  PASSWORD_RESET = 'PASSWORD_RESET',
+}

@@ -14,18 +14,17 @@ datasource db {
 }
 
 model User {
-  id        Int     @id @default(autoincrement())
-  username  String 
-  email     String  @unique
+  id        Int      @id @default(autoincrement())
+  username  String
+  email     String   @unique
   password  String
-  role      Role    @relation(fields: [roleId], references: [id])
+  role      Role     @relation(fields: [roleId], references: [id])
   roleId    Int
-  refreshToken RefreshToken[]
-  emailVerificationToken EmailVerificationToken[]
-  passwordResetToken PasswordResetToken[]
+  tokens    Token[]  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
 
 
 model Role {
@@ -55,33 +54,21 @@ model RolePermission {
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
 }
-model RefreshToken {
+model Token {
   id        Int      @id @default(autoincrement())
   token     String   @unique
   user      User     @relation(fields: [userId], references: [id])
   userId    Int
-  isRevoked Boolean  @default(false)
+  type      TokenType
   expiredAt DateTime
+  isUsed    Boolean  @default(false) // for email verification and password reset
+  isRevoked Boolean? @default(false) // for refresh token
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
-model EmailVerificationToken {
-  id        Int      @id @default(autoincrement())
-  token     String   @unique
-  user      User     @relation(fields: [userId], references: [id])
-  userId    Int
-  expiredAt DateTime
-  isUsed    Boolean  @default(false)
-  createdAt DateTime @default(now())
-}
-
-model PasswordResetToken {
-  id        Int      @id @default(autoincrement())
-  token     String   @unique
-  user      User     @relation(fields: [userId], references: [id])
-  userId    Int
-  expiredAt DateTime
-  isUsed    Boolean  @default(false)
-  createdAt DateTime @default(now())
+enum TokenType {
+  REFRESH
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
 }

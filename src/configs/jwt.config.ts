@@ -9,4 +9,8 @@ export default registerAs('jwt', () => ({
     secret: process.env.JWT_REFRESH_SECRET,
     expiresIn: process.env.JWT_REFRESH_EXPIRES_IN,
   },
+  email: {
+    secret: process.env.JWT_EMAIL_SECRET,
+    expiresIn: process.env.JWT_EMAIL_EXPIRES_IN,
+  },
 }));
