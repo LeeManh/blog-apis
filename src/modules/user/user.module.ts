@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { UserService } from './user.service';
-import { RoleModule } from 'src/role/role.module';
+import { RoleModule } from 'src/modules/role/role.module';
 import { UserRepository } from './user.repository';
 import { PrismaClient } from '@prisma/client';
 

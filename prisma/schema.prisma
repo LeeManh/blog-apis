@@ -15,11 +15,14 @@ datasource db {
 
 model User {
   id        Int     @id @default(autoincrement())
-  username  String  @unique
+  username  String 
   email     String  @unique
   password  String
   role      Role    @relation(fields: [roleId], references: [id])
   roleId    Int
+  refreshToken RefreshToken[]
+  emailVerificationToken EmailVerificationToken[]
+  passwordResetToken PasswordResetToken[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -51,4 +54,34 @@ model RolePermission {
   permissionId Int
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
+}
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  isRevoked Boolean  @default(false)
+  expiredAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model EmailVerificationToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  expiredAt DateTime
+  isUsed    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model PasswordResetToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  expiredAt DateTime
+  isUsed    Boolean  @default(false)
+  createdAt DateTime @default(now())
 }
