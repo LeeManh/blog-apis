@@ -12,6 +12,8 @@ import { TokenModule } from './modules/token/token.module';
 import jwtConfig from './configs/jwt.config';
 import mailConfig from './configs/mail.config';
 import commonConfig from './configs/common.config';
+import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
+import { APP_GUARD } from '@nestjs/core';
 
 @Module({
   imports: [
@@ -28,6 +30,12 @@ import commonConfig from './configs/common.config';
     TokenModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
+  ],
 })
 export class AppModule {}

@@ -8,7 +8,7 @@ export interface JWTDecodedToken extends JWTTokenPayload {
   exp: number;
 }
 
-export interface ISaveRefreshToken {
+export interface ICreateToken {
   token: string;
   userId: number;
 }

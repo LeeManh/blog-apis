@@ -3,20 +3,20 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService, JwtSignOptions, JwtVerifyOptions } from '@nestjs/jwt';
-import { PrismaService } from '../prisma/prisma.service';
 import {
-  ISaveRefreshToken,
+  ICreateToken,
   JWTDecodedToken,
   JWTTokenPayload,
   TokenType,
 } from './types/token.type';
+import { TokenRepository } from './token.repository';
 
 @Injectable()
 export class TokenService {
   constructor(
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
-    private readonly prismaService: PrismaService,
+    private readonly tokenRepository: TokenRepository,
   ) {}
 
   /* ----------------------------- Generate token ----------------------------- */
@@ -52,7 +52,7 @@ export class TokenService {
       this.generateRefreshToken(jwtTokenPayload),
     ]);
 
-    await this.createRefreshToken({
+    await this.saveRefreshToken({
       token: refreshToken,
       userId,
     });
@@ -81,14 +81,12 @@ export class TokenService {
   }
 
   /* ----------------------------- Token operations ----------------------------- */
-  async createRefreshToken(data: ISaveRefreshToken) {
+  async saveRefreshToken(data: ICreateToken) {
     const { token, userId } = data;
 
-    const decodedRefreshToken = this.verifyToken(token, {
-      secret: this.configService.get<string>('jwt.refresh.secret'),
-    });
+    const decodedRefreshToken = this.verifyRefreshToken(token);
 
-    await this.prismaService.token.create({
+    await this.tokenRepository.create({
       data: {
         token,
         userId,
@@ -97,16 +95,24 @@ export class TokenService {
       },
     });
   }
+  async saveEmailVerificationToken(data: ICreateToken) {
+    const { token, userId } = data;
 
-  async validateToken({
-    token,
-    tokenType,
-  }: {
-    token: string;
-    tokenType: TokenType;
-  }) {
+    const decodedToken = this.verifyEmailVerificationToken(token);
+
+    await this.tokenRepository.create({
+      data: {
+        token,
+        userId,
+        expiredAt: new Date(decodedToken.exp),
+        type: TokenType.EMAIL_VERIFICATION,
+      },
+    });
+  }
+
+  async validateToken(token: string, tokenType: TokenType) {
     try {
-      const existingToken = await this.prismaService.token.findUnique({
+      const existingToken = await this.tokenRepository.findOne({
         where: { token, type: tokenType },
       });
 
@@ -125,7 +131,7 @@ export class TokenService {
   }
 
   async revokeRefreshToken(token: string) {
-    await this.prismaService.token.update({
+    await this.tokenRepository.update({
       where: { token, type: TokenType.REFRESH },
       data: { isRevoked: true },
     });

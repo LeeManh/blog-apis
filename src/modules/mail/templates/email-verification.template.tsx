@@ -11,7 +11,7 @@ export default function VerificationEmail({
 }: IProps) {
   return (
     <div>
-      <p>Hello ${username},</p>
+      <p>Hello {username},</p>
       <p>Click the link below to verify your email:</p>
       <a href={emailVerificationLink} target="_blank">
         Verify Email

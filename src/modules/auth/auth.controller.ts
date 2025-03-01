@@ -1,22 +1,36 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Request,
+  UseGuards,
+} from '@nestjs/common';
 import { RegisterUserDto } from './dtos/register-user.dto';
 import { AuthService } from './auth.service';
 import { LoginUserDto } from './dtos/login-user.dto';
 import { RefreshTokenDto } from './dtos/refresh-token.dto';
-// import { VerifyEmailDto } from './dtos/verify-email.dto';
+import { LocalAuthGuard } from './guards/local-auth.guard';
+import { User } from '@prisma/client';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { Public } from 'src/common/decorators/public.decorator';
+import { LogoutDto } from './dtos/logout.dto';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  @Public()
   @Post('register')
   async register(@Body() registerUserDto: RegisterUserDto) {
     return this.authService.register(registerUserDto);
   }
 
+  @Public()
+  @UseGuards(LocalAuthGuard)
   @Post('login')
-  async login(@Body() loginUserDto: LoginUserDto) {
-    return this.authService.login(loginUserDto);
+  async login(@Body() loginUserDto: LoginUserDto, @Request() req: any) {
+    return this.authService.login(req.user as User);
   }
 
   @Post('refresh-token')
@@ -24,8 +38,16 @@ export class AuthController {
     return this.authService.refreshToken(refreshTokenDto);
   }
 
-  // @Post('verify-email')
-  // async verifyEmail(@Body() verifyEmailDto: VerifyEmailDto) {
-  //   return this.authService.verifyEmail(verifyEmailDto);
-  // }
+  @Post('logout')
+  async logout(@Body() logoutDto: LogoutDto) {
+    return this.authService.logout(logoutDto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('me')
+  async me(@Request() req: any) {
+    console.log(req.user);
+
+    return 'me';
+  }
 }

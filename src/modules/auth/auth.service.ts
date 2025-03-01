@@ -8,10 +8,11 @@ import { TokenService } from '../token/token.service';
 import { UserService } from '../user/user.service';
 import { MailService } from '../mail/mail.service';
 import { RegisterUserDto } from './dtos/register-user.dto';
-import { LoginUserDto } from './dtos/login-user.dto';
 import { RefreshTokenDto } from './dtos/refresh-token.dto';
 import { TokenType } from '../token/types/token.type';
 import { capitalizeFirst } from 'src/common/libs/string.lib';
+import { User } from '@prisma/client';
+import { LogoutDto } from './dtos/logout.dto';
 
 @Injectable()
 export class AuthService {
@@ -38,12 +39,17 @@ export class AuthService {
           userId: user.id,
           roleId: user.roleId,
         });
-
-      await this.mailService.sendEmailVerification({
-        username: user.username,
-        email: user.email,
-        emailVerificationToken,
-      });
+      await Promise.all([
+        this.mailService.sendEmailVerification({
+          username: user.username,
+          email: user.email,
+          emailVerificationToken,
+        }),
+        this.tokenService.saveEmailVerificationToken({
+          token: emailVerificationToken,
+          userId: user.id,
+        }),
+      ]);
 
       return { accessToken, refreshToken };
     } catch (error) {
@@ -55,12 +61,8 @@ export class AuthService {
     }
   }
 
-  async login(loginUserDto: LoginUserDto) {
+  async login(user: User) {
     try {
-      const { email, password } = loginUserDto;
-
-      const user = await this.userService.validateUser(email, password);
-
       /* --------------------- Generate and create JWT tokens --------------------- */
       const { accessToken, refreshToken } =
         await this.tokenService.generateAndStoreTokens({
@@ -83,10 +85,7 @@ export class AuthService {
 
       /* --------------------- Validate refresh token --------------------- */
       const decodedToken = this.tokenService.verifyRefreshToken(token);
-      await this.tokenService.validateToken({
-        token,
-        tokenType: TokenType.REFRESH,
-      });
+      await this.tokenService.validateToken(token, TokenType.REFRESH);
 
       /* --------------------- Generate and create JWT tokens --------------------- */
       const { accessToken, refreshToken } =
@@ -99,6 +98,19 @@ export class AuthService {
       await this.tokenService.revokeRefreshToken(token);
 
       return { accessToken, refreshToken };
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
+      throw new UnauthorizedException(capitalizeFirst(error?.message));
+    }
+  }
+
+  async logout(logoutDto: LogoutDto) {
+    try {
+      await this.tokenService.validateToken(logoutDto.token, TokenType.REFRESH);
+      // await this.tokenService.revokeRefreshToken(logoutDto.token);
     } catch (error) {
       if (error instanceof HttpException) {
         throw error;
