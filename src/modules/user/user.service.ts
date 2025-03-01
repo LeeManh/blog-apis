@@ -5,9 +5,9 @@ import {
 } from '@nestjs/common';
 import { CreateUserDto } from './dtos/create-user.dto';
 import { RoleService } from 'src/modules/role/role.service';
-import { ROLE_NAMES } from 'src/modules/role/types/role.type';
 import { compare, hash } from 'src/common/libs/hash.lib';
 import { UserRepository } from './user.repository';
+import { USER_ROLES } from '../role/constant/role.constant';
 
 @Injectable()
 export class UserService {
@@ -25,10 +25,8 @@ export class UserService {
     });
     if (existUser) throw new ConflictException('Email already registered');
 
-    // get client role
-    const clientRole = await this.roleService.getRoleByRoleName(
-      ROLE_NAMES.USER,
-    );
+    // get user role
+    const userRole = await this.roleService.getRoleById(USER_ROLES.USER);
 
     // create user
     const user = await this.userRepository.create({
@@ -36,7 +34,7 @@ export class UserService {
         email,
         password: await hash(password),
         username,
-        roleId: clientRole.id,
+        roleId: userRole.id,
       },
     });
 

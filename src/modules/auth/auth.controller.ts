@@ -12,9 +12,10 @@ import { LoginUserDto } from './dtos/login-user.dto';
 import { RefreshTokenDto } from './dtos/refresh-token.dto';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { User } from '@prisma/client';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { Public } from 'src/common/decorators/public.decorator';
 import { LogoutDto } from './dtos/logout.dto';
+import { Roles } from 'src/common/decorators/roles.decorator';
+import { USER_ROLES } from '../role/constant/role.constant';
 
 @Controller('auth')
 export class AuthController {
@@ -43,7 +44,7 @@ export class AuthController {
     return this.authService.logout(logoutDto);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @Roles(USER_ROLES.ADMIN)
   @Get('me')
   async me(@Request() req: any) {
     console.log(req.user);

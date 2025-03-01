@@ -23,4 +23,20 @@ export class RoleService {
     this.cache.set(roleName, role as unknown as Role);
     return role;
   }
+
+  async getRoleById(roleId: number) {
+    if (this.cache.has(roleId.toString())) {
+      return this.cache.get(roleId.toString()) as Role;
+    }
+
+    const role = await this.roleRepository.findOneOrThrow(
+      {
+        where: { id: roleId },
+      },
+      `Role with id ${roleId} not found`,
+    );
+
+    this.cache.set(roleId.toString(), role as unknown as Role);
+    return role;
+  }
 }
