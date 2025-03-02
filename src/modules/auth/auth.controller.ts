@@ -1,11 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Post,
-  Request,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Post, Request, UseGuards } from '@nestjs/common';
 import { RegisterUserDto } from './dtos/register-user.dto';
 import { AuthService } from './auth.service';
 import { LoginUserDto } from './dtos/login-user.dto';
@@ -14,8 +7,6 @@ import { LocalAuthGuard } from './guards/local-auth.guard';
 import { User } from '@prisma/client';
 import { Public } from 'src/common/decorators/public.decorator';
 import { LogoutDto } from './dtos/logout.dto';
-import { Roles } from 'src/common/decorators/roles.decorator';
-import { USER_ROLES } from '../role/constant/role.constant';
 
 @Controller('auth')
 export class AuthController {
@@ -43,13 +34,5 @@ export class AuthController {
   @Post('logout')
   async logout(@Body() logoutDto: LogoutDto) {
     return this.authService.logout(logoutDto);
-  }
-
-  @Roles(USER_ROLES.ADMIN)
-  @Get('me')
-  async me(@Request() req: any) {
-    console.log(req.user);
-
-    return 'me';
   }
 }

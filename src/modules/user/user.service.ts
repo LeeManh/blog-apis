@@ -62,4 +62,17 @@ export class UserService {
 
     return user;
   }
+
+  async getPermissionsByUserId(userId: number) {
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      include: {
+        role: {
+          include: { rolePermissions: { include: { permission: true } } },
+        },
+      },
+    });
+
+    return user.role.rolePermissions?.map((rp) => rp.permission);
+  }
 }

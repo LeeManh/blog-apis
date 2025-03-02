@@ -14,10 +14,11 @@ import mailConfig from './configs/mail.config';
 import commonConfig from './configs/common.config';
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
 import { APP_GUARD } from '@nestjs/core';
-import { RolesGuard } from './modules/auth/guards/roles.guard';
+// import { RolesGuard } from './modules/auth/guards/roles.guard';
 import { PostModule } from './modules/post/post.module';
 import { UploadModule } from './modules/upload/upload.module';
 import cloudinaryConfig from './configs/cloudinary.config';
+import { PermissionGuard } from './modules/auth/guards/permission.guard';
 
 @Module({
   imports: [
@@ -44,8 +45,12 @@ import cloudinaryConfig from './configs/cloudinary.config';
     },
     {
       provide: APP_GUARD,
-      useClass: RolesGuard,
+      useClass: PermissionGuard,
     },
+    // {
+    //   provide: APP_GUARD,
+    //   useClass: RolesGuard,
+    // },
   ],
 })
 export class AppModule {}

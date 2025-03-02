@@ -1,30 +1,79 @@
 import { PrismaClient } from '@prisma/client';
-import { NAME_ROLES, USER_ROLES } from '../modules/role/constant/role.constant';
+import { USER_ROLES } from '../modules/role/constant/role.constant';
 import * as dotenv from 'dotenv';
+import { PERMISSIONS } from '../modules/auth/constants/permissions.constant';
 dotenv.config();
 
 const prisma = new PrismaClient();
 
-async function seedRole() {
-  const roles = Object.keys(USER_ROLES).filter((key) => isNaN(Number(key)));
+const permissions = [
+  PERMISSIONS.POST.CREATE,
+  PERMISSIONS.POST.READ,
+  PERMISSIONS.POST.UPDATE,
+  PERMISSIONS.POST.DELETE,
+];
 
-  for (const role of roles) {
-    const id = USER_ROLES[role as keyof typeof USER_ROLES];
-    const name = NAME_ROLES[role as keyof typeof NAME_ROLES];
+async function seedPermissions() {
+  console.log('🌱 Seeding Permissions...');
 
-    if (name) {
-      await prisma.role.upsert({
-        where: { id },
-        update: {},
-        create: {
-          id,
-          name,
+  // Tạo Permission
+  for (const permission of permissions) {
+    await prisma.permission.upsert({
+      where: {
+        action_resource: {
+          action: permission.action,
+          resource: permission.resource,
+        },
+      },
+      update: {},
+      create: permission,
+    });
+  }
+
+  // Assign Permissions to Roles
+  const adminPermissions = permissions.map((p) => ({
+    action: p.action,
+    resource: p.resource,
+  }));
+  const userPermissions = permissions.filter((p) => p.action === 'read');
+  const guestPermissions = permissions.filter((p) => p.action === 'read');
+
+  const roles = [
+    { roleId: USER_ROLES.ADMIN, permissions: adminPermissions },
+    { roleId: USER_ROLES.USER, permissions: userPermissions },
+    { roleId: USER_ROLES.GUEST, permissions: guestPermissions },
+  ];
+
+  for (const { roleId, permissions } of roles) {
+    for (const permission of permissions) {
+      const foundPermission = await prisma.permission.findUnique({
+        where: {
+          action_resource: {
+            action: permission.action,
+            resource: permission.resource,
+          },
         },
       });
+
+      if (foundPermission) {
+        await prisma.rolePermission.upsert({
+          where: {
+            roleId_permissionId: {
+              roleId: roleId,
+              permissionId: foundPermission.id,
+            },
+          },
+          update: {},
+          create: {
+            roleId: roleId,
+            permissionId: foundPermission.id,
+          },
+        });
+      }
     }
   }
 
-  console.log('🌱 Roles seeded successfully!');
+  console.log('✅ Permissions seeded successfully!');
 }
 
-export default seedRole;
+export default seedPermissions;
