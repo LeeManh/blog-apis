@@ -15,6 +15,7 @@ import commonConfig from './configs/common.config';
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
 import { APP_GUARD } from '@nestjs/core';
 import { RolesGuard } from './modules/auth/guards/roles.guard';
+import { PostModule } from './modules/post/post.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { RolesGuard } from './modules/auth/guards/roles.guard';
     CommonModule,
     MailModule,
     TokenModule,
+    PostModule,
   ],
   controllers: [AppController],
   providers: [
