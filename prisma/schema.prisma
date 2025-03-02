@@ -14,56 +14,108 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
+  id        Int        @id @default(autoincrement())
   username  String
-  email     String   @unique
+  email     String     @unique
   password  String
-  role      Role     @relation(fields: [roleId], references: [id])
+  role      Role       @relation(fields: [roleId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   roleId    Int
-  tokens    Token[] 
+  tokens    Token[]
   status    UserStatus @default(PENDING)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  author    Post[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 }
 
-
-
 model Role {
-  id             Int              @id @default(autoincrement())
-  name           String           @unique
-  users          User[]
+  id              Int              @id @default(autoincrement())
+  name            String           @unique
+  users           User[]
   rolePermissions RolePermission[]
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
 }
 
 model Permission {
-  id             Int              @id @default(autoincrement())
-  action         String
-  resource       String
+  id              Int              @id @default(autoincrement())
+  action          String
+  resource        String
   rolePermissions RolePermission[]
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
 }
 
 model RolePermission {
-  id           Int         @id @default(autoincrement())
-  role         Role        @relation(fields: [roleId], references: [id])
+  id           Int        @id @default(autoincrement())
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   roleId       Int
-  permission   Permission  @relation(fields: [permissionId], references: [id])
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade, onUpdate: Cascade )
   permissionId Int
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
 }
+
 model Token {
-  id        Int      @id @default(autoincrement())
-  token     String   @unique
-  user      User     @relation(fields: [userId], references: [id])
+  id        Int       @id @default(autoincrement())
+  token     String    @unique
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   userId    Int
   type      TokenType
   expiredAt DateTime
-  isUsed    Boolean  @default(false) // for email verification and password reset
-  isRevoked Boolean? @default(false) // for refresh token
+  isUsed    Boolean   @default(false) // for email verification and password reset
+  isRevoked Boolean?  @default(false) // for refresh token
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Post {
+  id         Int            @id @default(autoincrement())
+  title      String         @unique
+  content    String
+  authorId   Int?
+  author     User?           @relation(fields: [authorId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  categories PostCategory[]
+  tags       PostTag[]
+  status     PostStatus     @default(DRAFT)
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+}
+
+model Tag {
+  id        Int       @id @default(autoincrement())
+  name      String    @unique
+  posts     PostTag[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Category {
+  id        Int            @id @default(autoincrement())
+  name      String         @unique
+  parentId  Int?
+  parent    Category?      @relation("SelfCategory", fields: [parentId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  children  Category[]     @relation("SelfCategory")
+  posts     PostCategory[]
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+}
+
+model PostCategory {
+  id         Int      @id @default(autoincrement())
+  postId     Int
+  post       Post     @relation(fields: [postId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  categoryId Int
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model PostTag {
+  id        Int      @id @default(autoincrement())
+  postId    Int
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  tagId     Int
+  tag       Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -78,4 +130,10 @@ enum UserStatus {
   PENDING
   ACTIVE
   BLOCKED
+}
+
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+  PRIVATE
 }

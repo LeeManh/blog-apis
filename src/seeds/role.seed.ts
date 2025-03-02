@@ -1,5 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { NAME_ROLES, USER_ROLES } from '../modules/role/constant/role.constant';
+import * as dotenv from 'dotenv';
+dotenv.config();
 
 const prisma = new PrismaClient();
 

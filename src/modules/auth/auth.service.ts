@@ -110,7 +110,7 @@ export class AuthService {
   async logout(logoutDto: LogoutDto) {
     try {
       await this.tokenService.validateToken(logoutDto.token, TokenType.REFRESH);
-      // await this.tokenService.revokeRefreshToken(logoutDto.token);
+      await this.tokenService.revokeRefreshToken(logoutDto.token);
     } catch (error) {
       if (error instanceof HttpException) {
         throw error;

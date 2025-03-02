@@ -26,6 +26,10 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
 
   handleRequest<TUser = JWTDecodedToken>(err: any, user: TUser): TUser {
     if (err || !user) {
+      if (!user) {
+        throw new UnauthorizedException('Token expired or invalid');
+      }
+
       throw new UnauthorizedException('Missing or invalid token');
     }
 
