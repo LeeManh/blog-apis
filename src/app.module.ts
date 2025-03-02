@@ -16,12 +16,14 @@ import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
 import { APP_GUARD } from '@nestjs/core';
 import { RolesGuard } from './modules/auth/guards/roles.guard';
 import { PostModule } from './modules/post/post.module';
+import { UploadModule } from './modules/upload/upload.module';
+import cloudinaryConfig from './configs/cloudinary.config';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [jwtConfig, mailConfig, commonConfig],
+      load: [jwtConfig, mailConfig, commonConfig, cloudinaryConfig],
     }),
     PrismaModule,
     UserModule,
@@ -31,6 +33,7 @@ import { PostModule } from './modules/post/post.module';
     MailModule,
     TokenModule,
     PostModule,
+    UploadModule,
   ],
   controllers: [AppController],
   providers: [
