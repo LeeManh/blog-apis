@@ -4,10 +4,25 @@ import { CreatePostDto } from './dtos/create-post.dto';
 import { JWTDecodedToken } from '../token/types/token.type';
 import { PostEntity } from './entity/post.entity';
 import { UpdatePostDto } from './dtos/update-post.dto';
+import { PostStatus } from '@prisma/client';
+import { GetPostsQueryDto } from './dtos/get-posts.dto';
+import { USER_ROLES } from '../role/constant/role.constant';
 
 @Injectable()
 export class PostService {
   constructor(private readonly postRepository: PostRepository) {}
+
+  private formatPost(post: any): PostEntity {
+    return new PostEntity({
+      ...post,
+      tags: post?.tags?.map((tag) => tag.tag) || [],
+      categories: post?.categories?.map((category) => category.category) || [],
+    } as unknown as PostEntity);
+  }
+
+  private getStatusBaseRole(user?: JWTDecodedToken) {
+    return user?.roleId === USER_ROLES.ADMIN ? undefined : PostStatus.PUBLISHED;
+  }
 
   async createPost(createPostDto: CreatePostDto, user: JWTDecodedToken) {
     const {
@@ -48,8 +63,9 @@ export class PostService {
     });
   }
 
-  async getPosts() {
+  async getPosts(query: GetPostsQueryDto, user?: JWTDecodedToken) {
     const posts = await this.postRepository.findMany({
+      where: { status: this.getStatusBaseRole(user) },
       include: {
         author: true,
         tags: {
@@ -65,19 +81,12 @@ export class PostService {
       },
     });
 
-    return posts.map(
-      (post) =>
-        new PostEntity({
-          ...post,
-          tags: post?.tags?.map((tag) => tag.tag),
-          categories: post?.categories?.map((category) => category.category),
-        } as unknown as PostEntity),
-    );
+    return posts.map((post) => new PostEntity(this.formatPost(post)));
   }
 
-  async getPostById(postId: number) {
-    const post = await this.postRepository.findOne({
-      where: { id: postId },
+  async getPostById(postId: number, user?: JWTDecodedToken) {
+    const post = await this.postRepository.findOneOrThrow({
+      where: { id: postId, status: this.getStatusBaseRole(user) },
       include: {
         author: true,
         tags: {
@@ -93,47 +102,51 @@ export class PostService {
       },
     });
 
-    return new PostEntity({
-      ...post,
-      tags: post?.tags?.map((tag) => tag.tag),
-      categories: post?.categories?.map((category) => category.category),
-    } as unknown as PostEntity);
+    return new PostEntity(this.formatPost(post));
   }
 
   async updatePost(postId: number, updatePostDto: UpdatePostDto) {
-    const { tags = [], categories = [] } = updatePostDto;
+    const { tags, categories, ...restUpdate } = updatePostDto;
 
     await this.postRepository.findOneOrThrow({
       where: { id: postId },
     });
 
+    const data: any = {
+      ...restUpdate,
+    };
+
+    if (tags) {
+      data.tags = {
+        deleteMany: {},
+        create: tags.map((tag) => ({
+          tag: {
+            connectOrCreate: {
+              where: { name: tag },
+              create: { name: tag },
+            },
+          },
+        })),
+      };
+    }
+
+    if (categories) {
+      data.categories = {
+        deleteMany: {},
+        create: categories.map((category) => ({
+          category: {
+            connectOrCreate: {
+              where: { name: category },
+              create: { name: category },
+            },
+          },
+        })),
+      };
+    }
+
     const updatedPost = await this.postRepository.update({
       where: { id: postId },
-      data: {
-        ...updatePostDto,
-        tags: {
-          deleteMany: {},
-          create: tags.map((tag) => ({
-            tag: {
-              connectOrCreate: {
-                where: { name: tag },
-                create: { name: tag },
-              },
-            },
-          })),
-        },
-        categories: {
-          deleteMany: {},
-          create: categories.map((category) => ({
-            category: {
-              connectOrCreate: {
-                where: { name: category },
-                create: { name: category },
-              },
-            },
-          })),
-        },
-      },
+      data,
     });
 
     return new PostEntity(updatedPost as unknown as PostEntity);

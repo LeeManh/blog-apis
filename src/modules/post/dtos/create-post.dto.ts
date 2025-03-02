@@ -1,9 +1,11 @@
+import { PostStatus } from '@prisma/client';
 import {
   IsString,
   IsOptional,
   IsArray,
   ArrayNotEmpty,
   IsUrl,
+  IsEnum,
 } from 'class-validator';
 
 export class CreatePostDto {
@@ -29,4 +31,10 @@ export class CreatePostDto {
   @IsString()
   @IsUrl({}, { message: 'Thumbnail must be a valid URL' })
   thumbnail?: string;
+
+  @IsOptional()
+  @IsEnum(PostStatus, {
+    message: `Status must be one of: ${Object.values(PostStatus).join(', ')}`,
+  })
+  status?: PostStatus;
 }

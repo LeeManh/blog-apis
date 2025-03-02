@@ -6,11 +6,15 @@ import {
 import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
 import { IS_PUBLIC_KEY } from 'src/common/decorators/public.decorator';
+import { TokenService } from 'src/modules/token/token.service';
 import { JWTDecodedToken } from 'src/modules/token/types/token.type';
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
-  constructor(private reflector: Reflector) {
+  constructor(
+    private reflector: Reflector,
+    private readonly tokenService: TokenService,
+  ) {
     super();
   }
 
@@ -19,7 +23,23 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
       context.getHandler(),
       context.getClass(),
     ]);
-    if (isPublic) return true;
+
+    const request = context.switchToHttp().getRequest();
+    const authHeader = request.headers.authorization;
+
+    if (isPublic) {
+      if (authHeader) {
+        try {
+          const token = authHeader.split(' ')[1];
+          const decodedToken = this.tokenService.verifyAccessToken(token);
+          request.user = decodedToken;
+        } catch {
+          request.user = null;
+        }
+      }
+
+      return true;
+    }
 
     return super.canActivate(context);
   }
